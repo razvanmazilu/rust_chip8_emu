@@ -3,6 +3,7 @@ use std::io::Read;
 use chip8::Chip8;
 
 pub mod ram;
+pub mod cpu;
 pub mod chip8;
 
 fn main() {
