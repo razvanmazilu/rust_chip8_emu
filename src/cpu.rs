@@ -1,4 +1,4 @@
-use crate::ram::Ram;
+use crate::bus::Bus;
 use std::fmt;
 
 pub const PROGRAM_START: u16 = 0x200;
@@ -22,9 +22,9 @@ impl Cpu {
         }
     }
 
-    pub fn run_instruction(&mut self, ram: &mut Ram) {
-		let hi = ram.read_byte(self.pc) as u16;
-		let lo = ram.read_byte(self.pc+1) as u16;
+    pub fn run_instruction(&mut self, bus: &mut Bus) {
+		let hi = bus.ram_read_byte(self.pc) as u16;
+		let lo = bus.ram_read_byte(self.pc+1) as u16;
 		let instruction : u16 = (hi << 8) | lo;
 		println!("instruction read{:#X} hi:{:#X} lo:{:#X}", instruction, hi, lo);
 	//	if lo == 0x00 && hi == 0x00 {
@@ -88,7 +88,7 @@ impl Cpu {
 			},
 			0xD => {
 				//draw(x,y,n);
-				self.debug_draw_sprite(ram, x.try_into().unwrap(), y.try_into().unwrap(),n.try_into().unwrap());
+				self.debug_draw_sprite(bus, x.try_into().unwrap(), y.try_into().unwrap(),n.try_into().unwrap());
 				self.pc += 2;
 			},
 			0xA => {
@@ -101,6 +101,12 @@ impl Cpu {
 					0xA1 => {
 						// if (key()! = Vx) skip the next instruction
 						let key = self.read_reg_vx(x);
+						if bus.key_pressed(key) {
+							self.pc += 2;
+						} else
+						{
+							self.pc += 4;
+						}
 					}
 					_ =>panic!("unrecognized 0xEX** instruction {:#X} : {:#X}", self.pc, instruction)
 				}
@@ -116,13 +122,15 @@ impl Cpu {
 
     }
 
-	fn debug_draw_sprite(&self, ram: &mut Ram, x: u8, y: u8, height: u8) {
+	fn debug_draw_sprite(&mut self, bus: &mut Bus, x: u8, y: u8, height: u8) {
 		println!("Draw sprite at ({}, {})", x, y);
 		for y in 0..height {
-			let mut b = ram.read_byte(self.i + y as u16);
-		bus.debug_draw_byte(b, x, y);
+			let b = bus.ram_read_byte(self.i + y as u16);
+			if bus.debug_draw_byte(b, x, y) {
+				self.write_reg_vx(0xF, 1);
+			}
+			y += 1
 		}
-		print!("\n");
 	}
 	pub fn write_reg_vx(&mut self, index: u16, value: u8) {
 		self.vx[index as usize] = value;

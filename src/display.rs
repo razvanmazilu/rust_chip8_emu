@@ -1,21 +1,39 @@
-struct Display{
+const WIDTH: usize = 64;
+const HEIGHT: usize = 32;
 
+pub struct Display{
+	screen: [[u8; WIDTH]; HEIGHT],
+	width: usize,
+	height: usize
 }
 
 impl Display{
 	pub fn new() -> Display {
-		Display {}
+		Display {
+			screen: [[0; WIDTH]; HEIGHT],
+			width: WIDTH,
+			height: HEIGHT
+		}
 	}
 
-	pub fn debug_draw_byte(mut byte: u8, x: u8, y: u8) {
-			for _ in 0..8 {
-				match (byte & 0b1000_0000)  >> 7{
-					0 => print!(" "),
-					1 => print!("#"),
-					_ => unreachable!(),
-				}
-				byte = byte << 1;
-			}
-			print!("\n");
+	pub fn debug_draw_byte(&mut self, byte: u8, x: u8, y: u8) -> bool {
+		let mut flipped = false;
+		for _ in 0..8 {
+			let mut b = byte;
+			let coord_x = x as usize;
+			let coord_y = y as usize;
+			match (byte & 0b1000_0000)  >> 7 {
+				0 => {
+					if self.screen[coord_x][coord_y] == 1 {
+						flipped = true;
+					}
+					self.screen[coord_x][coord_y] = 0;
+				},
+				1 => self.screen[coord_x][coord_y] = 1,
+				_ => unreachable!(),
+			};
+			b = b << 1;
+		}
+		flipped
 	}
 }
