@@ -5,6 +5,9 @@ use chip8::Chip8;
 pub mod ram;
 pub mod cpu;
 pub mod chip8;
+pub mod bus;
+pub mod display;
+pub mod keyboard;
 
 fn main() {
     let mut file = File::open("games/INVADERS").unwrap();

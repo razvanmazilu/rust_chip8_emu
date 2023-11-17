@@ -7,7 +7,8 @@ pub struct Cpu {
     vx: [u8; 16],
     pc: u16,
     i: u16,
-	prev_pc: u16
+	prev_pc: u16,
+	ret_stack: Vec<u16>
 }
 
 impl Cpu {
@@ -17,6 +18,7 @@ impl Cpu {
             pc: PROGRAM_START,
             i: 0,
 			prev_pc: 0,
+			ret_stack: Vec::<u16>::new()
         }
     }
 
@@ -47,6 +49,11 @@ impl Cpu {
 				//go to nnn;
 				self.pc = nnn;
 			},
+			0x2 => {
+				// call subroutine at adress nnn;
+				self.ret_stack.push(self.pc + 2);
+				self.pc = nnn;
+			},
 			0x3 => {
 				// skip next instruction if vx = nn;
 				if(self.read_reg_vx(x) == nn.try_into().unwrap()) {
@@ -55,7 +62,7 @@ impl Cpu {
 					self.pc += 2;
 				}
 
-			}
+			},
 			0x6 =>  {
 				//vx = nn;
 				self.write_reg_vx(x, nn.try_into().unwrap());
@@ -66,7 +73,19 @@ impl Cpu {
 				let vx = self.read_reg_vx(x);
 				self.write_reg_vx(x, vx.wrapping_add(nn.try_into().unwrap()));
 				self.pc += 2;
-			}
+			},
+			0x8 => {
+				match n {
+
+					0x0 => {
+						// Vx = Vy
+						let vy = self.read_reg_vx(y);
+						self.write_reg_vx(x,y.try_into().unwrap());
+						self.pc += 2;
+					},
+					_ =>panic!("unrecognized 0x8XY* instruction {:#X} : {:#X}", self.pc, instruction)
+				};
+			},
 			0xD => {
 				//draw(x,y,n);
 				self.debug_draw_sprite(ram, x.try_into().unwrap(), y.try_into().unwrap(),n.try_into().unwrap());
@@ -77,13 +96,22 @@ impl Cpu {
 				self.i = nnn;
 				self.pc += 2;
 			},
+			0xE => {
+				match nn {
+					0xA1 => {
+						// if (key()! = Vx) skip the next instruction
+						let key = self.read_reg_vx(x);
+					}
+					_ =>panic!("unrecognized 0xEX** instruction {:#X} : {:#X}", self.pc, instruction)
+				}
+			},
 			0xF => {
 				// i +=vx;
 				self.i += self.read_reg_vx(x) as u16;
 				self.pc += 2;
 			}
 
-			_=>panic!("unrecognized instruction {:#X} : {:#X}", self.pc, instruction)
+			_ =>panic!("unrecognized instruction {:#X} : {:#X}", self.pc, instruction)
 		}
 
     }
@@ -92,15 +120,7 @@ impl Cpu {
 		println!("Draw sprite at ({}, {})", x, y);
 		for y in 0..height {
 			let mut b = ram.read_byte(self.i + y as u16);
-			for _ in 0..8 {
-				match (b & 0b1000_0000)  >> 7{
-					0 => print!(" "),
-					1 => print!("#"),
-					_ => unreachable!(),
-				}
-				b = b << 1;
-			}
-			print!("\n");
+		bus.debug_draw_byte(b, x, y);
 		}
 		print!("\n");
 	}
