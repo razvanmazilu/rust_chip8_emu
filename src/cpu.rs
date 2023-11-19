@@ -107,10 +107,10 @@ impl Cpu {
                         self.write_reg_vx(x, vx | vy);
                     }
 
-                    //0x2 => {
+                    0x2 => {
                         //vx = vx&v
-                    //    self.write_reg_vx(x, vx & vy);
-                    //}
+                        self.write_reg_vx(x, vx & vy);
+                    }
 
                     0x3 => {
                         //vx = vx^vy
@@ -139,8 +139,8 @@ impl Cpu {
 						//vx = vy = vy >> 1
 						let bit = vy & 1;
 						self.write_reg_vx(0xF, bit);
-						self.write_reg_vx(x, vy >> 1);
 						self.write_reg_vx(y, vy >> 1);
+						self.write_reg_vx(x, vy >> 1);
 					}
                     
                     _ => panic!(
@@ -148,8 +148,18 @@ impl Cpu {
                         self.pc, instruction
                     ),
                 };
-                self.pc = 2;
+                self.pc += 2;
             }
+			//0x9 => {
+				//jump next instruction if vx != vy
+				//let vx = self.read_reg_vx(x);
+				//let vy = self.read_reg_vx(y);
+				//if(vx != vy) {
+				//	self.pc += 4;
+				//} else {
+				//	self.pc += 2;
+				//}
+			//}
             0xD => {
                 //draw(x,y,n);
                 self.debug_draw_sprite(
