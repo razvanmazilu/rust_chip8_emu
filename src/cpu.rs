@@ -152,13 +152,13 @@ impl Cpu {
             }
 			0x9 => {
 				//jump next instruction if vx != vy
-				//let vx = self.read_reg_vx(x);
-				//let vy = self.read_reg_vx(y);
-				//if(vx != vy) {
-				//	self.pc += 4;
-				//} else {
-				//	self.pc += 2;
-				//}
+				let vx = self.read_reg_vx(x);
+				let vy = self.read_reg_vx(y);
+				if(vx != vy) {
+					self.pc += 4;
+				} else {
+					self.pc += 2;
+				}
 			}
             0xD => {
                 //draw(x,y,n);
@@ -177,13 +177,22 @@ impl Cpu {
             }
             0xE => {
                 match nn {
+					0x9E => {
+						//if (key() == vx) skip the next instruction
+						let key = self.read_reg_vx(x);
+						if bus.key_pressed(key) {
+                            self.pc += 4;
+                        } else {
+                            self.pc += 2;
+                        }
+					}
                     0xA1 => {
                         // if (key()! = Vx) skip the next instruction
                         let key = self.read_reg_vx(x);
-                        if bus.key_pressed(key) {
-                            self.pc += 2;
+                        if !bus.key_pressed(key) {
+                            self.pc +=4;
                         } else {
-                            self.pc += 4;
+                            self.pc += 2;
                         }
                     }
                     _ => panic!(
@@ -193,15 +202,18 @@ impl Cpu {
                 }
             }
             0xF => {
+				match nn {
+					0x1E => {
+						self.i += self.read_reg_vx(x) as u16;
+						self.pc += 2;
+					}
+					_ => panic!("unrecognized 0xF instruction {:#X} : {:#X}", self.pc, instruction),
+				}
                 // i +=vx;
-                self.i += self.read_reg_vx(x) as u16;
-                self.pc += 2;
+                
             }
 
-            _ => panic!(
-                "unrecognized instruction {:#X} : {:#X}",
-                self.pc, instruction
-            ),
+            _ => panic!("unrecognized instruction {:#X} : {:#X}", self.pc, instruction),
         }
     }
 
