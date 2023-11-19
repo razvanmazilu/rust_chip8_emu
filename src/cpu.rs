@@ -150,7 +150,7 @@ impl Cpu {
                 };
                 self.pc += 2;
             }
-			//0x9 => {
+			0x9 => {
 				//jump next instruction if vx != vy
 				//let vx = self.read_reg_vx(x);
 				//let vy = self.read_reg_vx(y);
@@ -159,7 +159,7 @@ impl Cpu {
 				//} else {
 				//	self.pc += 2;
 				//}
-			//}
+			}
             0xD => {
                 //draw(x,y,n);
                 self.debug_draw_sprite(
