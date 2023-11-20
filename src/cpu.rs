@@ -159,12 +159,9 @@ impl Cpu {
 			},
             0xD => {
                 //draw(x,y,n);
-                self.debug_draw_sprite(
-                    bus,
-                    x.try_into().unwrap(),
-                    y.try_into().unwrap(),
-                    n.try_into().unwrap(),
-                );
+				let x = self.read_reg_vx(x);
+				let y = self.read_reg_vx(y);
+                self.debug_draw_sprite(bus, x, y, n.try_into().unwrap());
                 self.pc += 2;
             },
             0xA => {
@@ -202,9 +199,14 @@ impl Cpu {
 				match nn {
                     0x07 => {
                         //set vx with value from delay_timer
-                        self.write_reg_vx(x, bus.get_delay_timer())
+                        self.write_reg_vx(x, bus.get_delay_timer());
                         self.pc += 2;
                     },
+					0x0A => {
+						//vx = get_key()
+						//self.write_reg_vx(x, bus.key_pressed() as u8);
+						//self.pc += 2;
+					},
                     0x15 => {
                         //set delay_timer with value at vx
                         bus.set_delay_timer(self.read_reg_vx(x));
