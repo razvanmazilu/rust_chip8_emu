@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::Read;
 use chip8::Chip8;
 use minifb::Key;
+use display::Display;
 use minifb::{Window, WindowOptions};
 
 pub mod ram;
@@ -22,7 +23,7 @@ fn main() {
     chip8.load_rom(&data);
     
     const WIDTH: usize = 640;
-    const HEIGHT: usize = 360;
+    const HEIGHT: usize = 320;
 
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
     for i in buffer.iter_mut() {
@@ -46,6 +47,20 @@ fn main() {
 
         chip8.run_instruction();
         let chip8_buffer = chip8.get_display_buffer();
+
+        for y in 0..HEIGHT {
+            for x in 0..WIDTH {
+                let index = Display::get_index_from_coord(x/10, y/10);
+                let pixel = chip8_buffer[index];
+                let color_pixel = match pixel {
+                    0 => 0x0,
+                    1 => 0xffffffff,
+                    _ => unreachable!()
+                };
+                buffer[y*WIDTH + x] = color_pixel;
+            }
+        }
+        
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
     }
 }

@@ -11,7 +11,7 @@ impl Display{
 			screen: [0; WIDTH * HEIGHT],
 		}
 	}
-	fn get_index_from_coord(x: usize, y: usize) -> usize{
+	pub fn get_index_from_coord(x: usize, y: usize) -> usize{
 		y * WIDTH + x
 	}
 	pub fn debug_draw_byte(&mut self, byte: u8, x: u8, y: u8) -> bool {
