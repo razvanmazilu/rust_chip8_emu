@@ -12,7 +12,7 @@ impl Display{
 		}
 	}
 	fn get_index_from_coord(x: usize, y: usize) -> usize{
-		y * HEIGHT + x
+		y * WIDTH + x
 	}
 	pub fn debug_draw_byte(&mut self, byte: u8, x: u8, y: u8) -> bool {
 		let mut flipped = false;
