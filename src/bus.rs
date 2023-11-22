@@ -1,6 +1,7 @@
 pub use crate::keyboard::Keyboard;
 pub use crate::display::Display;
 pub use crate::ram::Ram;
+pub use crate::minifb::{Window, Key};
 use std::fmt;
 
 pub struct Bus {
@@ -10,7 +11,7 @@ pub struct Bus {
 	delay_timer: u8,
 }
 
-impl Bus {
+impl Bus{
 	pub fn new() -> Bus {
 		Bus {
 			ram: Ram::new(),
@@ -40,7 +41,9 @@ impl Bus {
 	{
 		self.display.clear();
 	}
-
+	pub fn set_key_pressed(&self, key: Option<u8>) {
+		self.keyboard.set_keys_pressed(key)
+	}
 	pub fn key_pressed(&self, key_code: u8) -> bool {
 		self.keyboard.key_pressed( key_code)
 	}
@@ -61,6 +64,10 @@ impl Bus {
 
 	pub fn get_display_buffer(&self) -> &[u8] {
 		self.display.get_screen()
+	}
+
+	pub fn get_key_pressed(&self) -> Option<u8> {
+		self.keyboard.get_key_pressed()
 	}
 }
 

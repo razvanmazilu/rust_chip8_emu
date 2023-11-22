@@ -1,14 +1,15 @@
 pub use crate::bus::Bus;
 pub use crate::cpu;
 pub use crate::cpu::Cpu;
+pub use crate::minifb::Window;
 
 
 pub struct Chip8 {
 	cpu: Cpu,
-	bus: Bus
+	bus: Bus,
 }
 
-impl Chip8 {
+impl Chip8{
 	pub fn new() -> Chip8 {
 		Chip8 {
 			cpu: Cpu::new(),
@@ -30,6 +31,10 @@ impl Chip8 {
 
 	pub fn get_display_buffer(&self) -> &[u8] {
 		self.bus.get_display_buffer()
+	}
+
+	pub fn set_key_pressed(&self, key: Option<u8>) {
+		self.bus.set_key_pressed(key)
 	}
 }
 
