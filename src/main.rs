@@ -1,19 +1,22 @@
 extern crate minifb;
+extern crate rand;
 
+use minifb::{Key, KeyRepeat, Window, WindowOptions};
 use std::fs::File;
 use std::io::Read;
 use chip8::Chip8;
 use display::Display;
-use minifb::{KeyRepeat, Window, WindowOptions, Key};
+use std::time::{Duration, Instant};
+use std::env;
 
-pub mod ram;
-pub mod cpu;
-pub mod chip8;
-pub mod bus;
-pub mod display;
-pub mod keyboard;
+mod ram;
+mod cpu;
+mod chip8;
+mod display;
+mod keyboard;
+mod bus;
 
-pub fn get_chip8_key_code_for(key: Option<Key>) -> Option<u8> {
+fn get_chip8_keycode_for(key: Option<Key>) -> Option<u8> {
     match key {
         Some(Key::Key1) => Some(0x1),
         Some(Key::Key2) => Some(0x2),
@@ -34,66 +37,81 @@ pub fn get_chip8_key_code_for(key: Option<Key>) -> Option<u8> {
         Some(Key::X) => Some(0x0),
         Some(Key::C) => Some(0xB),
         Some(Key::V) => Some(0xF),
-
-        _=> None
+        _ => None,
     }
-
 }
 
 fn main() {
-    let mut file = File::open("games/INVADERS").unwrap();
+    let mut file = File::open("games/TETRIS").unwrap();
     let mut data = Vec::<u8>::new();
     file.read_to_end(&mut data);
-    
-   
-    
-    const WIDTH: usize = 640;
-    const HEIGHT: usize = 320;
 
-    let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
-    for i in buffer.iter_mut() {
-        *i = 0xffff0000;
-    }
+    let width = 640;
+    let height = 320;
+
+    //ARGB buffer
+    let mut buffer: Vec<u32> = vec![0; width * height];
+
     let mut window = Window::new(
-        "Rust - chip8 emulator",
-        WIDTH,
-        HEIGHT,
+        "Rust Chip8 emulator",
+        width,
+        height,
         WindowOptions::default(),
-    )
-    .unwrap_or_else(|e| {
-        panic!("{}", e);
+    ).unwrap_or_else(|e| {
+        panic!("Window creation failed: {:?}", e);
     });
 
     let mut chip8 = Chip8::new();
     chip8.load_rom(&data);
-    // Limit to max ~60 fps update rate
-    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
+
+    let mut last_key_update_time = Instant::now();
+    let mut last_instruction_run_time = Instant::now();
+    let mut last_display_time = Instant::now();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-
-        let key_pressed = window.get_keys_pressed(KeyRepeat:: No);
-        let key = match key_pressed {
-            Some(keys) => Some(keys[0]),
-            None => None
+        let keys_pressed = window.get_keys_pressed(KeyRepeat::Yes);
+        let key = match keys_pressed {
+            Some(keys) => if !keys.is_empty() {
+                Some(keys[0])
+            } else {
+                None
+            },
+            None => None,
         };
-        let chip8_key = get_chip8_key_code_for(key);
 
-        chip8.run_instruction();
-        let chip8_buffer = chip8.get_display_buffer();
-
-        for y in 0..HEIGHT {
-            for x in 0..WIDTH {
-                let index = Display::get_index_from_coord(x/10, y/10);
-                let pixel = chip8_buffer[index];
-                let color_pixel = match pixel {
-                    0 => 0x0,
-                    1 => 0xffffffff,
-                    _ => unreachable!()
-                };
-                buffer[y*WIDTH + x] = color_pixel;
-            }
+        let chip8_key = get_chip8_keycode_for(key);
+        if chip8_key.is_some()
+            || Instant::now() - last_key_update_time >= Duration::from_millis(200)
+        {
+            last_key_update_time = Instant::now();
+            chip8.set_key_pressed(chip8_key);
         }
-        
-        window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
+
+        if Instant::now() - last_instruction_run_time > Duration::from_millis(2) {
+            chip8.run_instruction();
+            last_instruction_run_time = Instant::now();
+        }
+
+        if Instant::now() - last_display_time > Duration::from_millis(10) {
+            let chip8_buffer = chip8.get_display_buffer();
+
+            for y in 0..height {
+                let y_coord = y / 10;
+                let offset = y * width;
+                for x in 0..width {
+                    let index = Display::get_index_from_coords(x / 10, y_coord);
+                    let pixel = chip8_buffer[index];
+                    let color_pixel = match pixel {
+                        0 => 0x0,
+                        1 => 0xffffff,
+                        _ => unreachable!(),
+                    };
+                    buffer[offset + x] = color_pixel;
+                }
+            }
+
+            window.update_with_buffer(&buffer);
+            last_display_time = Instant::now();
+        }
     }
 }
