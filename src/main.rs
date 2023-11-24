@@ -42,7 +42,7 @@ fn get_chip8_keycode_for(key: Option<Key>) -> Option<u8> {
 }
 
 fn main() {
-    let mut file = File::open("games/TETRIS").unwrap();
+    let mut file = File::open("games/TICTAC").unwrap();
     let mut data = Vec::<u8>::new();
     file.read_to_end(&mut data);
 
